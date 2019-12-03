@@ -1,0 +1,227 @@
+<!doctype html> 
+<html lang="en"> 
+<head> 
+    <meta charset="UTF-8" />
+    <title>RPG</title>
+    <script src="//cdn.jsdelivr.net/npm/phaser@3.11.0/dist/phaser.js"></script>
+    <style type="text/css">
+        body {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+<script type="text/javascript">
+
+    var config = {
+        type: Phaser.AUTO,
+        width: 800,
+        height: 600,
+        physics: {
+            default: 'arcade',
+            arcade: {
+                gravity: { y: 0 }
+            }
+        },
+        scene: {
+            preload: preload,
+            create: create,
+            update: update,
+            extend: {
+                lastFired: 0,
+            }
+        }
+    };
+
+//Creates a database
+    var db = openDatabase('itemDB', '1.0', 'itemDB', 65535);
+    db.transaction(function(transaction){
+        var sql='CREATE TABLE shots ' + 
+        '(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,'+
+        'bulletType VARCHAR(100) NOT NULL,'+
+        'target VARCHAR(100) NOT NULL,'+
+        'damage INTEGER NOT NULL,'+
+        'date DATE NOT NULL)';
+        transaction.executeSql(sql, undefined, function(){
+            console.log('Table shots created');
+        },function(){
+            console.log('Table shots is already created');
+        })
+    })
+
+    var game = new Phaser.Game(config);
+
+    function preload ()
+    {
+        this.load.image('sky', 'assets/starSky.png');
+        this.load.image('bullet', 'assets/bomb.png');
+        this.load.image('player', 'assets/spaceship.png');
+        this.load.image('enemy', 'assets/enemyship.png');
+    }
+
+    function create ()
+    {
+        var Bullet = new Phaser.Class({
+
+        Extends: Phaser.GameObjects.Image,
+
+        initialize:
+
+        function Bullet (scene)
+        {
+            Phaser.GameObjects.Image.call(this, scene, 0, 0, 'bullet');
+
+            this.speed = 0;
+            this.born = 0;
+        },
+
+        fire: function (player)
+        {
+            this.setPosition(player.x, player.y-35);
+            this.speedX = Phaser.Math.GetSpeed(0, 1);
+            this.speedY = Phaser.Math.GetSpeed(-400, 1);
+            this.born = 0;
+        },
+
+        update: function (time, delta)
+        {
+            this.x += this.speedX * delta;
+            this.y += this.speedY * delta;
+
+            this.born += delta;
+
+            if (this.born > 1300)
+            {
+                this.setActive(false);
+                this.setVisible(false);
+            }
+        }
+
+    });
+
+
+        this.physics.world.setBounds(0, 0, 800, 600);
+        this.cameras.main.setBounds(0, 0, 800, 600);
+
+        this.add.image(0, 0, 'sky').setOrigin(0).setAlpha(1).setScale(1.5);
+
+        player = this.physics.add.sprite(400, 550, 'player').setScale(0.2);
+
+        cursors = this.input.keyboard.createCursorKeys();
+
+        enemy = this.physics.add.sprite(400, 100, 'enemy').setScale(0.2);
+
+        enemy.health = 10;
+
+        this.input.mouse.disableContextMenu();
+        player.setCollideWorldBounds(true);
+        enemy.setCollideWorldBounds(false);
+        // Pointer lock will only work after mousedown
+        game.canvas.addEventListener('mousedown', function () {
+        game.input.mouse.requestPointerLock();
+    });
+        // Exit pointer lock when Q or escape (by default) is pressed.
+        this.input.keyboard.on('keydown_Q', function (event) {
+        if (game.input.mouse.locked)
+            game.input.mouse.releasePointerLock();
+    }, 0, this);
+            // Move reticle upon locked pointer move
+    this.input.on('pointermove', function (pointer) {
+        if (this.input.mouse.locked)
+        {
+            player.x += pointer.movementX;
+            // player.y += pointer.movementY;
+        }
+    }, this);
+
+        playerBullets = this.physics.add.group({ classType: Bullet, runChildUpdate: true });
+            // Fires bullet from player on left click of mouse
+    this.input.on('pointerdown', function (pointer, time, lastFired) {
+        if (player.active === false)
+            return;
+        // Get bullet from bullets group
+        var bullet = playerBullets.get().setActive(true).setVisible(true);  
+
+        if (bullet)
+        {
+            bullet.fire(player);
+            this.physics.add.collider(enemy, bullet, enemyHitCallback);
+        }
+    }, this);
+
+        specialKeys = this.input.keyboard.addKeys({
+        'db': Phaser.Input.Keyboard.KeyCodes.B,
+        'info': Phaser.Input.Keyboard.KeyCodes.C,
+        'insert': Phaser.Input.Keyboard.KeyCodes.X,
+    });
+        this.input.keyboard.on('keydown_X', function (event) {
+            dataBaseInsert('User', 'Program', Date.now());
+        });
+
+            this.input.keyboard.on('keydown_B', function (event) {
+            if (!confirm('Are you sure to delete this table','')) return;;
+    db.transaction(function(transaction){
+        var sql='DROP TABLE shots';
+        transaction.executeSql(sql, undefined,
+            function() {
+                alert('Table is deleted successfully')
+            },function(){
+                alert('Error occured while deleting this table');
+            })
+    });
+    });
+        this.input.keyboard.on('keydown_C', function (event) {
+            db.transaction(function(transaction){
+            var sql='SELECT * FROM shots ORDER BY id DESC';
+            transaction.executeSql(sql, undefined, function(transaction, result) {
+                console.log(result)
+            })
+        })
+    });
+
+    }
+
+    function update (time, delta) {
+    var cam = this.cameras.main;
+    }
+
+function enemyHitCallback(enemyHit, bulletHit)
+{
+    // Reduce health of enemy
+    if (bulletHit.active === true && enemyHit.active === true)
+    {
+    var bulletType = 'PlayerBullets';
+    var target = 'Enemy';
+    var date=Date.now();
+    var dmg = 1;
+        dataBaseInsert(bulletType, target, dmg, date);
+        enemyHit.health = enemyHit.health - dmg;
+        console.log("Enemy hp: ", enemyHit.health);
+
+        // Kill enemy if health <= 0
+        if (enemyHit.health <= 0)
+        {
+           enemyHit.setActive(false).setVisible(false);
+        }
+
+        // Destroy bullet
+        bulletHit.setActive(false).setVisible(false);
+    }
+}
+function dataBaseInsert(type, target, damage, date)
+{
+        db.transaction(function(transaction){
+        var sql='INSERT INTO shots(bulletType, target, damage, date) VALUES(?,?,?,?)';
+        transaction.executeSql(sql, [type, target, damage, date],
+            function(){
+                console.log('Bullet hit');
+            },function(){
+                console.log('Failed');
+            });
+    });
+}
+</script>
+
+</body>
+</html>
