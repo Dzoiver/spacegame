@@ -2,7 +2,7 @@
 <html lang="en"> 
 <head> 
     <meta charset="UTF-8" />
-    <title>RPG</title>
+    <title>Miracle</title>
     <script src="//cdn.jsdelivr.net/npm/phaser@3.11.0/dist/phaser.js"></script>
     <style type="text/css">
         body {
@@ -156,7 +156,7 @@
         'insert': Phaser.Input.Keyboard.KeyCodes.X,
     });
         this.input.keyboard.on('keydown_X', function (event) {
-            dataBaseInsert('User', 'Program', Date.now());
+            dataBaseInsert('User', 'Program', '2', Date.now());
         });
 
             this.input.keyboard.on('keydown_B', function (event) {
